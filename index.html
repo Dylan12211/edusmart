@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUSMART</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>EDUSMART</h1>
+            <nav>
+                <ul>
+                    <li><a href="#features">Tính năng</a></li>
+                    <li><a href="#download">Tải xuống</a></li>
+                    <li><a href="#contact">Liên hệ</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h2>Ứng dụng quản lý học sinh toàn diện</h2>
+                <p>Theo dõi kết quả học tập, vị trí di chuyển, lịch học và nhiều hơn nữa!</p>
+                <div class="hero-buttons">
+                    <a href="#download" class="btn btn-primary">Tải ứng dụng</a>
+                    <a href="#features" class="btn btn-secondary">Tìm hiểu thêm</a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <img src="C:\Users\Do Cuong\Downloads\edusmart_updated_site\logo_app.jpg" alt="App mockup" id="app-mockup">
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="features">
+        <div class="container">
+            <h2>Tính năng nổi bật</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🗺️</div>
+                    <h3>Theo dõi vị trí học sinh</h3>
+                    <p>Giám sát vị trí di chuyển của học sinh theo thời gian thực qua bản đồ</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Xem kết quả học tập</h3>
+                    <p>Theo dõi bảng điểm, thành tích, và đánh giá của học sinh</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📅</div>
+                    <h3>Quản lý thời khóa biểu</h3>
+                    <p>Cập nhật, chỉnh sửa lịch học linh hoạt mọi lúc</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">👪</div>
+                    <h3>Dành riêng cho phụ huynh</h3>
+                    <p>Giao diện dễ dùng, riêng tư, an toàn – chỉ hiển thị thông tin con của mình</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="download" class="download">
+        <div class="container">
+            <h2>Tải xuống ứng dụng</h2>
+            <div class="download-options">
+                <div class="download-platform">
+                    <img src="images/android-logo.png" alt="Android" class="platform-logo" id="android-logo">
+                    <h3>Android</h3>
+                    <a href="https://play.google.com/store" class="btn btn-download">Google Play</a>
+                    <div id="android-qrcode" class="qrcode"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="contact">
+        <div class="container">
+            <h2>Liên hệ với chúng tôi</h2>
+            <form id="contact-form">
+                <div class="form-group">
+                    <label for="name">Họ tên</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="message">Nội dung</label>
+                    <textarea id="message" name="message" rows="5" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Gửi</button>
+            </form>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h3>EDUSMART</h3>
+                    <p>© 2024 Bản quyền thuộc về công ty</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Liên kết</h4>
+                    <ul>
+                        <li><a href="#features">Tính năng</a></li>
+                        <li><a href="#download">Tải xuống</a></li>
+                        <li><a href="#contact">Liên hệ</a></li>
+                    </ul>
+                </div>
+                <div class="footer-social">
+                    <h4>Mạng xã hội</h4>
+                    <div class="social-icons">
+                        <a href="https://www.facebook.com/profile.php?id=61576552515268" class="social-icon" target="_blank">Facebook</a>
+                        <a href="https://www.facebook.com/profile.php?id=61576552515268" class="social-icon" target="_blank">Twitter</a>
+                        <a href="https://www.instagram.com/edusmart.vn/?fbclid=IwY2xjawK_gSxleHRuA2FlbQIxMABicmlkETFjTHh1Z0ZxbnRzMGR4cDU0AR6q9At8VQV1xPT45cAHuo8Lme5oMSV4WdYzeyyZRQimy5MDVxMEiKJDIxPcgw_aem_8o6-mX7ART5Ctw-MRhF8MA" class="social-icon" target="_blank">Instagram</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html> 
