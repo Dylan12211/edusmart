@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Biểu đồ đánh giá</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f7fa;
+    }
+    .chart-wrapper {
+      max-width: 1200px;
+      margin: 20px auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    h2, h3 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    canvas {
+      width: 100% !important;
+      max-height: 400px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+      font-size: 14px;
+    }
+    th {
+      background-color: #f9f9f9;
+    }
+    .toggle-btn {
+      display: block;
+      margin: 10px auto;
+      padding: 10px 20px;
+      background: #0074d9;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div class="chart-wrapper">
+  <h2>Biểu đồ đánh giá người dùng</h2>
+  <canvas id="ratingPieChart"></canvas>
+
+  <h3>Thống kê số lượt đánh giá theo mức sao</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Số sao</th>
+        <th>Số lượt đánh giá</th>
+      </tr>
+    </thead>
+    <tbody id="ratingDetailTable"></tbody>
+  </table>
+
+  <h3>Bảng chi tiết nhận xét</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>STT</th>
+        <th>Email người đánh giá</th>
+        <th>Số sao</th>
+        <th>Nội dung nhận xét</th>
+      </tr>
+    </thead>
+    <tbody id="reviewDetailTable"></tbody>
+  </table>
+
+  <button id="showMoreBtn" class="toggle-btn">Xem thêm</button>
+  <button id="showLessBtn" class="toggle-btn" style="display:none;">Ẩn bớt</button>
+</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBSbBFMQTc-BxWCfysRFVbdIzzTxwdi1Ws",
+    authDomain: "my-app-d3b22.firebaseapp.com",
+    projectId: "my-app-d3b22",
+    storageBucket: "my-app-d3b22.appspot.com",
+    messagingSenderId: "20460076740",
+    appId: "1:20460076740:web:d7494624f09e46bfb11391"
+  };
+  firebase.initializeApp(firebaseConfig);
+
+  let allReviewRowsHTML = [];
+
+  async function getUserEmail(userId) {
+    try {
+      const userDoc = await firebase.firestore().collection('users').doc(userId).get();
+      return userDoc.exists ? userDoc.data().user_name : 'Không có thông tin';
+    } catch {
+      return 'Không có thông tin';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    const ratingDetailTable = document.getElementById('ratingDetailTable');
+    const reviewDetailTable = document.getElementById('reviewDetailTable');
+
+    const ratingCount = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    allReviewRowsHTML = [];
+
+    try {
+      const snapshot = await firebase.firestore().collection('app_reviews').get();
+      let stt = 1;
+
+      for (const doc of snapshot.docs) {
+        const data = doc.data();
+        const rating = data.rating || 0;
+        const comment = data.comment || '';
+        const userId = data.userId || '';
+        const email = await getUserEmail(userId);
+
+        if (rating >= 1 && rating <= 5) ratingCount[rating]++;
+
+        allReviewRowsHTML.push(`
+          <tr>
+            <td>${stt++}</td>
+            <td>${email}</td>
+            <td>${rating} ⭐</td>
+            <td>${comment ? comment : '(Không có nhận xét)'}</td>
+          </tr>
+        `);
+      }
+
+      const ctx = document.getElementById('ratingPieChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['1 sao', '2 sao', '3 sao', '4 sao', '5 sao'],
+          datasets: [{
+            data: [
+              ratingCount[1],
+              ratingCount[2],
+              ratingCount[3],
+              ratingCount[4],
+              ratingCount[5]
+            ],
+            backgroundColor: ['#e74c3c', '#f39c12', '#f1c40f', '#2ecc71', '#3498db']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom' },
+            title: { display: true, text: 'Phân bố đánh giá người dùng' }
+          }
+        }
+      });
+
+      const totalRatings = Object.values(ratingCount).reduce((a, b) => a + b, 0);
+
+      ratingDetailTable.innerHTML = Object.entries(ratingCount).map(([star, count]) => `
+        <tr>
+          <td>${star} ⭐</td>
+          <td>${count}</td>
+        </tr>
+      `).join("") + `
+        <tr style="font-weight:bold; background:#f0f0f0;">
+          <td>Tổng cộng</td>
+          <td>${totalRatings}</td>
+        </tr>
+      `;
+
+      renderReviewTable(5);
+      setupToggleButtons();
+
+    } catch (error) {
+      reviewDetailTable.innerHTML = '<tr><td colspan="4">Lỗi tải dữ liệu đánh giá.</td></tr>';
+      console.error(error);
+    }
+  });
+
+  function renderReviewTable(limit) {
+    const reviewDetailTable = document.getElementById('reviewDetailTable');
+    reviewDetailTable.innerHTML = allReviewRowsHTML.slice(0, limit).join('');
+  }
+
+  function setupToggleButtons() {
+    const showMoreBtn = document.getElementById('showMoreBtn');
+    const showLessBtn = document.getElementById('showLessBtn');
+
+    showMoreBtn.onclick = () => {
+      renderReviewTable(allReviewRowsHTML.length);
+      showMoreBtn.style.display = 'none';
+      showLessBtn.style.display = 'block';
+    };
+
+    showLessBtn.onclick = () => {
+      renderReviewTable(5);
+      showMoreBtn.style.display = 'block';
+      showLessBtn.style.display = 'none';
+    };
+  }
+</script>
+
+</body>
+</html>

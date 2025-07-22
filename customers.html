@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Khách hàng | EDUSMART</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f7fa;
+      margin: 0;
+      padding: 30px;
+    }
+    h2, h3 {
+      color: #333;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .chart-container {
+      max-width: 600px;
+      margin: 0 auto 40px;
+    }
+    canvas {
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #f9f9f9;
+    }
+    .toggle-btn {
+      display: block;
+      margin: 10px auto;
+      padding: 10px 20px;
+      background: #0074d9;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Tổng số người dùng: <span id="totalUsers">0</span></h2>
+
+<h3>Tỷ lệ người dùng Premium</h3>
+<div class="chart-container">
+  <canvas id="premiumChart" width="400" height="400"></canvas>
+</div>
+
+<h3>Danh sách người dùng</h3>
+<table>
+  <thead>
+    <tr>
+      <th>STT</th>
+      <th>Gmail</th>
+      <th>Trạng thái Premium</th>
+    </tr>
+  </thead>
+  <tbody id="userTableBody"></tbody>
+</table>
+
+<button id="showMoreBtn" class="toggle-btn">Xem thêm</button>
+<button id="showLessBtn" class="toggle-btn" style="display:none;">Ẩn bớt</button>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBSbBFMQTc-BxWCfysRFVbdIzzTxwdi1Ws",
+    authDomain: "my-app-d3b22.firebaseapp.com",
+    projectId: "my-app-d3b22",
+    storageBucket: "my-app-d3b22.appspot.com",
+    messagingSenderId: "20460076740",
+    appId: "1:20460076740:web:d7494624f09e46bfb11391"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  let allUserRowsHTML = [];
+
+  async function fetchUserData() {
+    const totalUsersSpan = document.getElementById("totalUsers");
+    let totalUsers = 0;
+    let premiumCount = 0;
+    let freeCount = 0;
+    let index = 1;
+
+    const snapshot = await db.collection('users').get();
+    allUserRowsHTML = [];
+
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      const email = data.user_name || "Không rõ";
+      const isPremium = data.premium === true;
+      const statusText = isPremium ? "Premium" : "Chưa đăng ký";
+      const statusColor = isPremium ? "green" : "red";
+
+      if (isPremium) premiumCount++;
+      else freeCount++;
+
+      allUserRowsHTML.push(`
+        <tr>
+          <td>${index++}</td>
+          <td>${email}</td>
+          <td style="color: ${statusColor}; font-weight: bold;">${statusText}</td>
+        </tr>
+      `);
+
+      totalUsers++;
+    });
+
+    totalUsersSpan.textContent = totalUsers;
+    renderTableRows(5);
+    setupToggleButtons();
+    renderPremiumChart(premiumCount, freeCount);
+  }
+
+  function renderTableRows(limit) {
+    const userTableBody = document.getElementById("userTableBody");
+    userTableBody.innerHTML = allUserRowsHTML.slice(0, limit).join('');
+  }
+
+  function setupToggleButtons() {
+    const showMoreBtn = document.getElementById('showMoreBtn');
+    const showLessBtn = document.getElementById('showLessBtn');
+
+    showMoreBtn.onclick = () => {
+      renderTableRows(allUserRowsHTML.length);
+      showMoreBtn.style.display = 'none';
+      showLessBtn.style.display = 'block';
+    };
+
+    showLessBtn.onclick = () => {
+      renderTableRows(5);
+      showMoreBtn.style.display = 'block';
+      showLessBtn.style.display = 'none';
+    };
+  }
+
+  function renderPremiumChart(premium, free) {
+    const ctx = document.getElementById('premiumChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Premium', 'Chưa đăng ký'],
+        datasets: [{
+          data: [premium, free],
+          backgroundColor: ['#4CAF50', '#FF5252'],
+          hoverOffset: 10
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Tỷ lệ người dùng Premium'
+          },
+          legend: {
+            position: 'bottom'
+          }
+        }
+      }
+    });
+  }
+
+  fetchUserData();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tổng quan | EDUSMART</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f4f7fa;
+    }
+    h1 {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      padding: 20px;
+      max-width: 1200px;
+      margin: auto;
+    }
+    .summary-card {
+      background: white;
+      border-radius: 10px;
+      padding: 30px 20px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .summary-card h2 {
+      font-size: 36px;
+      color: #3498db;
+      margin: 10px 0;
+    }
+    .summary-card p {
+      font-size: 18px;
+      color: #555;
+    }
+    .chart-container {
+      max-width: 1200px;
+      margin: 40px auto 20px;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .pie-charts-wrapper {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 30px;
+      max-width: 1200px;
+      margin: 20px auto 50px;
+    }
+    .pie-chart-box {
+      flex: 1;
+      min-width: 300px;
+      max-width: 500px;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Tổng quan hệ thống</h1>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <p>Doanh thu tổng</p>
+      <h2 id="totalRevenue">0 VNĐ</h2>
+    </div>
+    <div class="summary-card">
+      <p>Số giao dịch thành công</p>
+      <h2 id="totalTransactions">0</h2>
+    </div>
+    <div class="summary-card">
+      <p>Tổng số khách hàng</p>
+      <h2 id="totalCustomers">0</h2>
+    </div>
+    <div class="summary-card">
+      <p>Tổng số lượt đánh giá</p>
+      <h2 id="totalReviews">0</h2>
+    </div>
+  </div>
+
+  <!-- Biểu đồ cột ở trên -->
+  <div class="chart-container">
+    <canvas id="revenueChart" style="height: 100px;"></canvas>
+  </div>
+
+  <!-- Hai biểu đồ tròn ở dưới -->
+  <div class="pie-charts-wrapper">
+    <div class="pie-chart-box">
+      <canvas id="customerPieChart"></canvas>
+    </div>
+    <div class="pie-chart-box">
+      <canvas id="ratingPieChart"></canvas>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBSbBFMQTc-BxWCfysRFVbdIzzTxwdi1Ws",
+      authDomain: "my-app-d3b22.firebaseapp.com",
+      projectId: "my-app-d3b22",
+      storageBucket: "my-app-d3b22.firebasestorage.app",
+      messagingSenderId: "20460076740",
+      appId: "1:20460076740:web:d7494624f09e46bfb11391"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    async function loadSummary() {
+      let totalRevenue = 0;
+      let totalTransactions = 0;
+      let totalCustomers = 0;
+      let totalReviews = 0;
+      let monthlyRevenue = Array(12).fill(0);
+      let ratingCount = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      let premiumCount = 0;
+      let normalCount = 0;
+
+      const paymentSnapshot = await db.collection('payos_payments').get();
+      paymentSnapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.status === "SUCCESS") {
+          totalRevenue += data.amount || 0;
+          totalTransactions++;
+          const month = data.createdAt.toDate().getMonth();
+          monthlyRevenue[month] += data.amount || 0;
+        }
+      });
+
+      const usersSnapshot = await db.collection('users').get();
+      totalCustomers = usersSnapshot.size;
+      usersSnapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.premium === true) {
+          premiumCount++;
+        } else {
+          normalCount++;
+        }
+      });
+
+      const reviewSnapshot = await db.collection('app_reviews').get();
+      totalReviews = reviewSnapshot.size;
+      reviewSnapshot.forEach(doc => {
+        const data = doc.data();
+        const rating = data.rating || 0;
+        if (rating >= 1 && rating <= 5) ratingCount[rating]++;
+      });
+
+      document.getElementById('totalRevenue').innerText = totalRevenue.toLocaleString() + ' VNĐ';
+      document.getElementById('totalTransactions').innerText = totalTransactions;
+      document.getElementById('totalCustomers').innerText = totalCustomers;
+      document.getElementById('totalReviews').innerText = totalReviews;
+
+      renderRevenueChart(monthlyRevenue);
+      renderCustomerPieChart(premiumCount, normalCount);
+      renderRatingPieChart(ratingCount);
+    }
+
+    function renderRevenueChart(monthlyRevenue) {
+      const ctx = document.getElementById('revenueChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 
+                   'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'],
+          datasets: [{
+            label: 'Doanh thu theo tháng (VNĐ)',
+            data: monthlyRevenue,
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'Doanh thu (VNĐ)' }
+            },
+            x: { title: { display: true, text: 'Tháng' } }
+          },
+          plugins: {
+            legend: { display: false },
+            title: { display: true, text: 'Biểu đồ doanh thu hàng tháng' }
+          }
+        }
+      });
+    }
+
+    function renderCustomerPieChart(premiumCount, normalCount) {
+      const ctx = document.getElementById('customerPieChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['Khách hàng Premium', 'Khách hàng thường'],
+          datasets: [{
+            data: [premiumCount, normalCount],
+            backgroundColor: ['#2ecc71', '#95a5a6']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom' },
+            title: { display: true, text: 'Phân loại khách hàng' }
+          }
+        }
+      });
+    }
+
+    function renderRatingPieChart(ratingCount) {
+      const ctx = document.getElementById('ratingPieChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['1 sao', '2 sao', '3 sao', '4 sao', '5 sao'],
+          datasets: [{
+            data: [
+              ratingCount[1],
+              ratingCount[2],
+              ratingCount[3],
+              ratingCount[4],
+              ratingCount[5]
+            ],
+            backgroundColor: ['#e74c3c', '#f39c12', '#f1c40f', '#2ecc71', '#3498db']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom' },
+            title: { display: true, text: 'Phân bố đánh giá người dùng' }
+          }
+        }
+      });
+    }
+
+    loadSummary();
+  </script>
+
+</body>
+</html>
