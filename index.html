@@ -22,6 +22,17 @@
     firebase.initializeApp(firebaseConfig);
   </script>
 </head>
+<script>
+function accessDashboard() {
+  const password = prompt("Vui lòng nhập mật khẩu để truy cập Dashboard:");
+  if (password === "exe201") {
+    window.location.href = "dashboard.html";
+  } else if (password !== null) {
+    alert("Sai mật khẩu!");
+  }
+}
+</script>
+  
 <body>
   <header>
     <div class="container">
@@ -31,7 +42,8 @@
           <li><a href="#features">Tính năng</a></li>
           <li><a href="#download">Tải xuống</a></li>
           <li><a href="#contact">Liên hệ</a></li>
-          <li><a href="dashboard.html">Dashboard</a></li>
+          <li><a href="#" onclick="accessDashboard()">Dashboard</a></li>
+
 
         </ul>
       </nav>
@@ -130,7 +142,8 @@
             <li><a href="#features">Tính năng</a></li>
             <li><a href="#download">Tải xuống</a></li>
             <li><a href="#contact">Liên hệ</a></li>
-            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="#" onclick="accessDashboard()">Dashboard</a></li>
+
 
           </ul>
         </div>
